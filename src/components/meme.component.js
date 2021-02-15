@@ -110,6 +110,7 @@ export default class Meme extends Component {
                         id="name"
                         value={currentMeme.name}
                         onChange={this.onChangeName}
+                        disabled
                         />
                     </div>
                     <div className="form-group">
@@ -146,7 +147,7 @@ export default class Meme extends Component {
             ) : (
               <div>
                 <br />
-                <p>Please click on a Meme...</p>
+                {/* <p>Please click on a Meme...</p> */}
               </div>
             )}
           </div>

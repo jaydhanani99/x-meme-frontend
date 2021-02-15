@@ -1,20 +1,20 @@
 import http from "../http-common";
 
 class MemeDataService {
-  getAll() {
-    return http.get("/memes");
+  getAll(params) {
+    return http.get("/memes/", { params });
   }
 
   get(id) {
-    return http.get(`/memes/${id}`);
+    return http.get(`/memes/${id}/`);
   }
 
   create(data) {
-    return http.post("/memes", data);
+    return http.post("/memes/", data);
   }
 
   update(id, data) {
-    return http.put(`/memes/${id}`, data);
+    return http.put(`/memes/${id}/`, data);
   }
 
   delete(id) {
@@ -26,7 +26,7 @@ class MemeDataService {
   }
 
   findByCaption(caption) {
-    return http.get(`/memes?caption=${caption}`);
+    return http.get(`/memes/?search=${caption}`);
   }
 }
 

@@ -1,6 +1,9 @@
 import React, { Component } from "react";
 import MemeDataService from "../services/meme.service";
 import { Link } from "react-router-dom";
+import Pagination from "@material-ui/lab/Pagination";
+import { Card, CardColumns } from 'react-bootstrap';
+import Moment from 'react-moment';
 
 export default class MemesList extends Component {
     constructor(props) {
@@ -11,13 +14,20 @@ export default class MemesList extends Component {
         this.setActiveMeme = this.setActiveMeme.bind(this);
         this.removeAllMemes = this.removeAllMemes.bind(this);
         this.searchCaption = this.searchCaption.bind(this);
+        this.handlePageChange = this.handlePageChange.bind(this);
+        this.handlePageSizeChange = this.handlePageSizeChange.bind(this);
 
         this.state = {
         memes: [],
         currentMeme: null,
         currentIndex: -1,
-        searchCaption: ""
+        searchCaption: "",
+
+        page: 1,
+        count: 0,
+        pageSize: 5,
         };
+      this.pageSizes = [5, 10, 15];
     }
 
     componentDidMount() {
@@ -33,16 +43,43 @@ export default class MemesList extends Component {
     }
 
     retrieveMemes() {
-        MemeDataService.getAll()
+        const { searchCaption, page, pageSize } = this.state;
+        const params = this.getRequestParams(searchCaption, page, pageSize);
+        MemeDataService.getAll(params)
         .then(response => {
+            const { data, total_pages } = response.data;
             this.setState({
-            memes: response.data
+            memes: data,
+            count: total_pages,
             });
             console.log(response.data);
         })
         .catch(e => {
             console.log(e);
         });
+    }
+
+    handlePageChange(event, value) {
+      this.setState(
+        {
+          page: value,
+        },
+        () => {
+          this.retrieveMemes();
+        }
+      );
+    }
+
+    handlePageSizeChange(event) {
+      this.setState(
+        {
+          pageSize: event.target.value,
+          page: 1
+        },
+        () => {
+          this.retrieveMemes();
+        }
+      );
     }
 
     refreshList() {
@@ -75,7 +112,7 @@ export default class MemesList extends Component {
         MemeDataService.findByCaption(this.state.searchCaption)
         .then(response => {
             this.setState({
-            memes: response.data
+            memes: response.data.data
             });
             console.log(response.data);
         })
@@ -84,8 +121,26 @@ export default class MemesList extends Component {
         });
     }
 
+    getRequestParams(searchCaption, page, pageSize) {
+      let params = {};
+  
+      if (searchCaption) {
+        params["caption"] = searchCaption;
+      }
+  
+      if (page) {
+        params["page"] = page;
+      }
+  
+      if (pageSize) {
+        params["page_size"] = pageSize;
+      }
+  
+      return params;
+    }
+
     render() {
-        const { searchCaption, memes, currentMeme, currentIndex } = this.state;
+        const { searchCaption, memes, currentMeme, currentIndex, page, count, pageSize } = this.state;
     
         return (
           <div className="list row">
@@ -94,7 +149,7 @@ export default class MemesList extends Component {
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="Search by caption"
+                  placeholder="Search..."
                   value={searchCaption}
                   onChange={this.onChangeSearchCaption}
                 />
@@ -109,10 +164,36 @@ export default class MemesList extends Component {
                 </div>
               </div>
             </div>
-            <div className="col-md-6">
+            <div className="row">
               <h4>Memes List</h4>
-    
-              <ul className="list-group">
+              <div>
+              <CardColumns>
+              {memes &&
+                  memes.map((meme, index) => (
+                      <Card>
+                        <Card.Img style={{maxWidth: "250px", maxHeight: "250px"}} variant="top" src={meme.url} />
+                        <Card.Body>
+                          <Card.Title>{meme.name}</Card.Title>
+                          <Card.Text>{meme.caption}</Card.Text>
+                        </Card.Body>
+                        <Card.Footer>
+                          <div style={{ display: "flex" }}>
+                            <small className="text-muted"><Moment format="h:mm A">{meme.created_at}</Moment></small>
+                            <Link
+                              to={"/memes/" + meme.id}
+                              className="badge badge-warning"
+                              style={{ marginLeft: "auto"}}
+                            >
+                              Edit
+                            </Link>
+                          </div>
+                        </Card.Footer>
+                      </Card>
+                    
+                  ))}
+              </CardColumns>
+              </div>
+              {/* <ul className="list-group">
                 {memes &&
                   memes.map((meme, index) => (
                     <li
@@ -123,17 +204,47 @@ export default class MemesList extends Component {
                       onClick={() => this.setActiveMeme(meme, index)}
                       key={index}
                     >
-                      {meme.caption}
+                      <div style={{ display: "flex" }}>
+                        <div style={{fontWeight: "bold"}}>{meme.name}</div>
+                        <Link
+                          to={"/memes/" + meme.id}
+                          className="badge badge-warning"
+                          style={{ marginLeft: "auto", height: "fit-content" }}
+                        >
+                          Edit
+                        </Link>
+                      </div>
+                      <div style={{paddingLeft: "5px"}}>{meme.caption}</div>
+                      <div>
+                      <img style={{marginTop: "7px", maxWidth: "250px", maxHeight: "250px"}}
+                        src={`${meme.url}?auto=compress&cs=tinysrgb&h=150`}
+                        alt={meme.caption}
+                        /></div>
                     </li>
                   ))}
-              </ul>
-    
-              <button
-                className="m-3 btn btn-sm btn-danger"
-                onClick={this.removeAllMemes}
-              >
-                Remove All
-              </button>
+              </ul> */}
+              <div className="mt-3">
+                {"Items per Page: "}
+                <select onChange={this.handlePageSizeChange} value={pageSize}>
+                  {this.pageSizes.map((size) => (
+                    <option key={size} value={size}>
+                      {size}
+                    </option>
+                  ))}
+                </select>
+
+                <Pagination
+                  className="my-3"
+                  count={count}
+                  page={page}
+                  siblingCount={1}
+                  boundaryCount={1}
+                  variant="outlined"
+                  shape="rounded"
+                  onChange={this.handlePageChange}
+                />
+              </div>
+
             </div>
             <div className="col-md-6">
               {currentMeme ? (
@@ -158,17 +269,17 @@ export default class MemesList extends Component {
                     {currentMeme.url}
                   </div>
     
-                  <Link
+                  {/* <Link
                     to={"/memes/" + currentMeme.id}
                     className="badge badge-warning"
                   >
                     Edit
-                  </Link>
+                  </Link> */}
                 </div>
               ) : (
                 <div>
                   <br />
-                  <p>Please click on a Meme...</p>
+                  {/* <p>Please click on a Meme...</p> */}
                 </div>
               )}
             </div>

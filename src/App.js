@@ -15,7 +15,7 @@ class App extends Component {
       <div>
         <nav className="navbar navbar-expand navbar-dark bg-dark">
           <a href="/memes" className="navbar-brand">
-            Memes
+            Memes App
           </a>
           <div className="navbar-nav mr-auto">
             <li className="nav-item">
